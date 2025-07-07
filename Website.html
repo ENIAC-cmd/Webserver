@@ -1,24 +1,269 @@
 <!DOCTYPE html>
-<html>
-    <html lang="en"></html>
+<html lang="de">
 <head>
-    <title>Upload Server</title>
-    <link rel="stylesheet" href="Css.css">
-    <title>Page Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Französisch-Adverbien-Quiz</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to start to prevent content jumping */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        /* Ensure inputs and buttons have rounded corners */
+        input, button {
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+        /* Specific styles for feedback messages */
+        .correct {
+            color: #10B981; /* Green-500 */
+        }
+        .incorrect {
+            color: #EF4444; /* Red-500 */
+        }
+        /* Style for the hidden German meaning */
+        .hidden-german-meaning {
+            display: none; /* Initially hidden */
+        }
+        /* Floating island for special characters - Enhanced Apple Glass Aesthetic */
+        .floating-island {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.7); /* Even more transparent white */
+            backdrop-filter: blur(35px); /* Significantly increased blur for strong frosted effect */
+            -webkit-backdrop-filter: blur(35px); /* For Safari support */
+            border: 1px solid rgba(255, 255, 255, 0.5); /* Slightly more prominent white border */
+            padding: 1rem;
+            border-radius: 1.5rem; /* More rounded */
+            box-shadow: 0 20px 30px -8px rgba(0, 0, 0, 0.2), 0 8px 12px -4px rgba(0, 0, 0, 0.1); /* Stronger, softer shadow */
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000; /* Ensure it stays on top */
+        }
+        .floating-island button {
+            background-color: rgba(100, 116, 139, 0.95); /* Slate-500, slightly more opaque */
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem; /* Rounded button */
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            font-size: 1.25rem; /* Larger font for characters */
+            line-height: 1; /* Adjust line height for better vertical alignment */
+            border: none; /* Remove default button border */
+        }
+        .floating-island button:hover {
+            background-color: rgba(71, 85, 105, 1); /* Slate-700, fully opaque on hover */
+            transform: scale(1.05);
+        }
+
+        /* Adjust main content padding to not overlap with floating island on smaller screens */
+        @media (max-width: 768px) {
+            body {
+                padding-right: 20px; /* Reset padding for smaller screens if island is on right */
+            }
+            .floating-island {
+                right: 10px; /* Adjust position for smaller screens */
+                padding: 0.75rem;
+                gap: 0.4rem;
+            }
+            .floating-island button {
+                padding: 0.6rem 0.8rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="quiz-container bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Französisch-Adverbien-Quiz</h1>
+        <p class="text-center text-gray-600 mb-6">Fülle das passende Adverb in die Lücke im Satz ein.</p>
 
-    <h1>Webserver</h1>
-    <p>Datei hochladen:</p>
+        <div id="quiz-questions">
+            <!-- Questions will be dynamically inserted here by JavaScript -->
+        </div>
 
-    <form method="post" enctype="multipart/form-data">
-        
-        <label for="file">Datei</label>
-        <input id="file" name="file" type="file">
-        <br><br>
-        <button>Schicken</button>
+        <button id="check-answers-btn" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+            Antworten überprüfen
+        </button>
 
-    </form>
+        <button id="new-sentences-btn" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+            Neue Sätze generieren
+        </button>
 
+        <div id="score-area" class="mt-6 text-center text-xl font-semibold text-gray-700">
+            <!-- Score will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Floating Island for Special Characters -->
+    <div class="floating-island">
+        <button data-char="é">é</button>
+        <button data-char="è">è</button>
+        <button data-char="à">à</button>
+        <button data-char="ç">ç</button>
+        <button data-char="ù">ù</button>
+        <button data-char="â">â</button>
+        <button data-char="ê">ê</button>
+        <button data-char="î">î</button>
+        <button data-char="ô">ô</button>
+        <button data-char="û">û</button>
+    </div>
+
+    <script>
+        // Array of quiz questions, each containing the German meaning, French adjective forms, the correct adverb, and an array of example sentences.
+        const quizData = [
+            { de: "Nett / Freundlich", frAdj: "Gentil / Gentille", frAdverb: "Gentiment", sentences: ["Il a répondu à ma question ___.", "Elle parle ___ à tout le monde.", "Agissez ___ avec les animaux."] },
+            { de: "Aktuell / Fließend", frAdj: "Courant / Courante", frAdverb: "Couramment", sentences: ["Elle parle français ___.", "Il écrit ___ des articles.", "Ce logiciel fonctionne très ___."] },
+            { de: "Enorm / Riesig", frAdj: "Énorme / Énorme", frAdverb: "Énormément", sentences: ["J'ai appris ___ de ce livre.", "Il y a ___ de monde ici.", "Elle a ___ de talent."] },
+            { de: "Gut", frAdj: "Bon / Bonne", frAdverb: "Bien", sentences: ["Il spielt Gitarre ___.", "Elle chante très ___.", "Nous avons très ___ dormi."] },
+            { de: "Offensichtlich", frAdj: "Évident / Évidente", frAdverb: "Évidemment", sentences: ["___, il a réussi son examen.", "___, nous irons au parc s'il fait beau.", "C'est ___ la meilleure solution."] },
+            { de: "Schlecht", frAdj: "Mauvais / Mauvaise", frAdverb: "Mal", sentences: ["Il a chanté très ___.", "J'ai ___ dormi cette nuit.", "Ce projet a très ___ tourné."] },
+            { de: "Einfach", frAdj: "Facile / Facile", frAdverb: "Facilement", sentences: ["Elle a résolu le problème ___.", "Vous pouvez trouver la gare ___.", "Il a appris à conduire ___."] },
+            { de: "Normal", frAdj: "Normal / Normale", frAdverb: "Normalement", sentences: ["___, le magasin ouvre à 9 heures.", "___, je prends le bus.", "Il se comporte ___."] },
+            { de: "Offen", frAdj: "Ouvert / Ouverte", frAdverb: "Ouvertement", sentences: ["Il a parlé de ses sentiments ___.", "Elle a critiqué la décision ___.", "Ils ont exprimé leur désaccord ___."] },
+            { de: "Glücklich", frAdj: "Heureux / Heureuse", frAdverb: "Heureusement", sentences: ["___, personne n'a été blessé.", "___, j'ai trouvé mes clés.", "___, le train n'était pas en retard."] },
+            { de: "Lang", frAdj: "Long / Longue", frAdverb: "Longuement", sentences: ["Ils ont diskutiert ___.", "Elle a attendu ___ son tour.", "Il a réfléchi ___ à la question."] },
+            { de: "Natürlich", frAdj: "Naturel / Naturelle", frAdverb: "Naturellement", sentences: ["Elle a réagi très ___.", "___, je suis d'accord avec vous.", "Il a agi ___ dans cette situation."] },
+            { de: "Anders / Verschieden", frAdj: "Différent / Différente", frAdverb: "Différemment", sentences: ["Nous voyons les choses ___.", "Il faut aborder ce problème ___.", "Elle pense ___ des autres."] },
+            { de: "Gewaltig / Heftig", frAdj: "Violent / Violente", frAdverb: "Violemment", sentences: ["Le vent soufflait ___.", "Il a réagi ___ à la nouvelle.", "La voiture a freiné ___."] },
+            { de: "Intelligent", frAdj: "Intelligent / Intelligente", frAdverb: "Intelligemment", sentences: ["Il a agi ___.", "Elle a répondu ___ à toutes les questions.", "Il a résolu le puzzle ___."] },
+            { de: "Unabhängig", frAdj: "Indépendant / Indépendante", frAdverb: "Indépendamment", sentences: ["Il arbeitet ___.", "Elle a voyagé ___.", "Ils ont pris leur décision ___ de l'avis des autres."] },
+            { de: "Quadratisch", frAdj: "Carré / Carrée", frAdverb: "Carrément", sentences: ["C'est ___ impossible !", "Il a refusé ___.", "Elle a dit non ___."] },
+            { de: "Stark", frAdj: "Fort / Forte", frAdverb: "Fortement", sentences: ["Il a été ___ critiqué.", "Elle ist ___ impliquée dans le Projekt.", "Le café est ___ aromatisé."] },
+            { de: "Wahr / Echt", frAdj: "Vrai / Vraie", frAdverb: "Vraiment", sentences: ["C'est ___ interessant.", "Je suis ___ fatigué.", "Elle a ___ bien joué."] },
+            { de: "Gefährlich", frAdj: "Dangereux / Dangereuse", frAdverb: "Dangereusement", sentences: ["Il conduit ___.", "Le chemin ist ___ glissant.", "Il a agi ___ pour sa santé."] },
+            { de: "Allein / Einzig", frAdj: "Seul / Seule", frAdverb: "Seulement", sentences: ["J'ai ___ deux euros.", "Il ist ___ un enfant.", "Elle a ___ réussi grâce à son travail."] },
+            { de: "Gerecht / Richtig", frAdj: "Juste / Juste", frAdverb: "Justement", sentences: ["C'est ___ ce que je pensais.", "Il est arrivé ___ à l'heure.", "___, je voulais te parler de ça."] },
+            { de: "Modern", frAdj: "Moderne / Moderne", frAdverb: "Modernement", sentences: ["La maison ist dekoriert ___.", "Elle s'habille très ___.", "Le bureau est aménagé ___."] }
+        ];
+
+        // Get references to HTML elements
+        const quizQuestionsContainer = document.getElementById('quiz-questions');
+        const checkAnswersBtn = document.getElementById('check-answers-btn');
+        const newSentencesBtn = document.getElementById('new-sentences-btn'); // New button
+        const scoreArea = document.getElementById('score-area');
+        const specialCharButtons = document.querySelectorAll('.floating-island button');
+
+        let lastFocusedInput = null; // To keep track of the last focused input field
+
+        /**
+         * Renders all quiz questions into the DOM.
+         * For each question, it randomly selects one sentence from the available options.
+         */
+        function renderQuiz() {
+            quizQuestionsContainer.innerHTML = ''; // Clear previous questions
+            scoreArea.textContent = ''; // Clear previous score
+
+            quizData.forEach((question, index) => {
+                const masculineAdj = question.frAdj.split(' / ')[0]; // Extract only the masculine form
+                // Randomly select a sentence from the array of sentences
+                const randomSentence = question.sentences[Math.floor(Math.random() * question.sentences.length)];
+
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50'; // Styling for each question block
+                questionDiv.innerHTML = `
+                    <p class="text-lg font-medium text-gray-700 mb-2">
+                        <span class="font-bold">Frage ${index + 1}:</span><br>
+                        <span class="hidden-german-meaning">Deutsches Adjektiv: <span class="font-semibold">${question.de}</span><br></span>
+                        Französisches Adjektiv: <span class="font-semibold">${masculineAdj}</span>
+                    </p>
+                    <p class="text-lg text-gray-800 mb-3">
+                        Satz: ${randomSentence.replace('___', '<span class="font-bold text-blue-600">___</span>')}
+                    </p>
+                    <label for="answer-${index}" class="block text-sm font-medium text-gray-600 mb-1">Dein Adverb:</label>
+                    <input type="text" id="answer-${index}" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Gib das Adverb hier ein">
+                    <div id="feedback-${index}" class="mt-2 text-sm font-medium"></div>
+                `;
+                quizQuestionsContainer.appendChild(questionDiv);
+
+                // Add focus event listener to each input field
+                const inputElement = document.getElementById(`answer-${index}`);
+                inputElement.addEventListener('focus', (event) => {
+                    lastFocusedInput = event.target;
+                });
+            });
+        }
+
+        /**
+         * Checks the user's answers against the correct answers and displays feedback.
+         * Calculates and displays the total score.
+         * Also reveals the German meaning for each question.
+         */
+        function checkAnswers() {
+            let correctCount = 0;
+            quizData.forEach((question, index) => {
+                const inputElement = document.getElementById(`answer-${index}`);
+                const feedbackElement = document.getElementById(`feedback-${index}`);
+                const userAnswer = inputElement.value.trim().toLowerCase(); // Get user input, trim whitespace, and convert to lowercase
+                const correctAnswer = question.frAdverb.toLowerCase(); // Convert correct answer to lowercase for case-insensitive comparison
+
+                // Clear previous feedback
+                feedbackElement.textContent = '';
+                feedbackElement.classList.remove('correct', 'incorrect');
+
+                if (userAnswer === correctAnswer) {
+                    feedbackElement.textContent = 'Richtig!';
+                    feedbackElement.classList.add('correct');
+                    correctCount++;
+                } else {
+                    feedbackElement.textContent = `Falsch. Die richtige Antwort ist: ${question.frAdverb}`;
+                    feedbackElement.classList.add('incorrect');
+                }
+            });
+
+            // Reveal all hidden German meanings
+            const hiddenElements = document.querySelectorAll('.hidden-german-meaning');
+            hiddenElements.forEach(el => {
+                el.style.display = 'block'; // Change display to make it visible
+            });
+
+            // Display the total score
+            scoreArea.textContent = `Du hast ${correctCount} von ${quizData.length} Fragen richtig beantwortet!`;
+        }
+
+        /**
+         * Inserts a character into the last focused input field at the current cursor position.
+         * @param {string} char - The character to insert.
+         */
+        function insertChar(char) {
+            if (lastFocusedInput) {
+                const start = lastFocusedInput.selectionStart;
+                const end = lastFocusedInput.selectionEnd;
+                const value = lastFocusedInput.value;
+
+                lastFocusedInput.value = value.substring(0, start) + char + value.substring(end);
+                lastFocusedInput.selectionStart = lastFocusedInput.selectionEnd = start + char.length;
+                lastFocusedInput.focus(); // Re-focus the input after insertion
+            }
+        }
+
+        // Add event listeners to the special character buttons
+        specialCharButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const charToInsert = button.dataset.char;
+                insertChar(charToInsert);
+            });
+        });
+
+        // Add event listener to the "Check Answers" button
+        checkAnswersBtn.addEventListener('click', checkAnswers);
+
+        // Add event listener to the "Neue Sätze generieren" button
+        newSentencesBtn.addEventListener('click', renderQuiz); // Re-render the quiz to get new sentences
+
+        // Render the quiz questions when the page loads
+        window.onload = renderQuiz;
+    </script>
 </body>
 </html>
